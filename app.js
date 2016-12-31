@@ -25,8 +25,11 @@ const PORT = 2180;
 // create the application
 var app = express();
 
-// bodyparser middleware
-app.use(body_parser.json());
+app.use(body_parser.json());    // middleware to parse body
+app.use(function(req, res, next){   // middleware to log request
+    __logger.info("%s: %s", req.method, req.originalUrl);
+    next();
+})
 
 // test route
 app.get("/", function(req, res){
