@@ -1,6 +1,6 @@
 // router for /message routes
 
-var twilio = include("twilio");
+var twilio = require("twilio");
 
 var router = require("express").Router();
 
