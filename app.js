@@ -20,7 +20,7 @@ var express = require("express");
 var https = require("https");
 var body_parser = require("body-parser");
 
-const PORT = 2180;
+const PORT = process.env.PORT || 2180;
 
 // create the application
 var app = express();
