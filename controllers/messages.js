@@ -10,7 +10,12 @@ var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
 router.post("/", function(req, res){
 
     // we need to get the message text. assume it's zip code first
-    ds_client.get_hourly("40.2187", "-74.8507", function(body){
+    ds_client.get_hourly("40.2187", "-74.8507", function(error, body){
+
+        if (error) {
+            __logger.error("Error with DarkSky API: ${error}");
+            return;
+        }
 
         // try responding
         var resp = new twilio.TwimlResponse();

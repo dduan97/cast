@@ -14,9 +14,7 @@ DarkSky.prototype.get_hourly = function(lat, long, callback){
     __logger.verbose("DarkSky: preparing GET request to %s", this.host + req_path);
 
     // now we make the get request to the api
-    https_request.get(this.host + req_path, function(body){
-        callback(body);
-    });
+    https_request.get(this.host + req_path, callback);
 }
 
 module.exports.DarkSky = DarkSky;
