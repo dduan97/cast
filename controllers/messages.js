@@ -11,8 +11,8 @@ var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
 // Twilio will POST here for an incoming message
 router.post("/", function(req, res){
 
-    __logger.info("printing body of request");
-    console.log(req.body);
+    __logger.info("printing request");
+    console.log(req);
 
     // get the string of the message body
     var message_body = req.body.Body;
