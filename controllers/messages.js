@@ -13,17 +13,38 @@ function parse_incoming_message(req, res, next){
     // get the request message body, split by word
     var message_body = req.body.Body.match(/\S+/g);
 
-    var command = message_body.shift();
-    var location = message_body.join(" ");
+    // if the body is empty
+    if (message_body.length == 0) {
+        req.body.Body = {
+            command: "",
+            location: ""
+        }
+        next();
+    } else if (["hourly"].includes(message_body[0])) {
+        var command = message_body.shift();
+        var location = message_body.join(" ");
 
-    // first word is the forecast type/command, the rest is the location info
-    var parsed_message = {
-        command: command.toLowerCase(),
-        location: location.toLowerCase()
+        // first word is the forecast type/command, the rest is the location info
+        var parsed_message = {
+            command: command.toLowerCase(),
+            location: location.toLowerCase()
+        }
+
+        req.body.Body = parsed_message;
+        next();
+    } else {
+        var command = "";
+        var location = message_body.join(" ");
+
+        // first word is the forecast type/command, the rest is the location info
+        var parsed_message = {
+            command: command.toLowerCase(),
+            location: location.toLowerCase()
+        }
+
+        req.body.Body = parsed_message;
+        next();
     }
-
-    req.body.Body = parsed_message;
-    next();
 }
 
 // convert an hourly forecast object to a string
@@ -117,6 +138,7 @@ router.post("/", parse_incoming_message, function(req, res){
                 outbound_msg += hourly_forecast_to_string(hourly_data.slice(0,6));
 
                 twilio_helpers.send_twiml(res, [outbound_msg]);
+                return;
 
             });
         } else {
