@@ -12,6 +12,7 @@ var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
 function parse_incoming_message(req, res, next){
     // get the request message body, split by word
     var message_body = req.body.Body.match(/\S+/g);
+    message_body = message_body.map((e) => e.toLowerCase());
 
     // if the body is empty
     if (message_body.length == 0) {
@@ -26,8 +27,8 @@ function parse_incoming_message(req, res, next){
 
         // first word is the forecast type/command, the rest is the location info
         var parsed_message = {
-            command: command.toLowerCase(),
-            location: location.toLowerCase()
+            command: command,
+            location: location
         }
 
         req.body.Body = parsed_message;
