@@ -7,6 +7,9 @@ function DarkSky(key){
     this.path = "/forecast/" + key.toString() + "/";
 }
 
+// DarkSky.get_hourly
+// <lat> and <long> are stringified latitude and longitude
+// <callback> will be called with params error and body
 DarkSky.prototype.get_hourly = function(lat, long, callback){
     var exclusions = ["currently", "minutely", "daily", "alerts", "flags"];
     var req_path = this.path + lat + "," + long + "/";

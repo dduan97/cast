@@ -2,6 +2,8 @@
 
 var twilio = require("twilio");
 var router = require("express").Router();
+var geocoder = require("geocoder");
+
 var dark_sky = __include("helpers/dark-sky.js");
 var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
 
@@ -9,23 +11,42 @@ var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
 // Twilio will POST here for an incoming message
 router.post("/", function(req, res){
 
-    // we need to get the message text. assume it's zip code first
-    ds_client.get_hourly("40.2187", "-74.8507", function(error, body){
+    __logger.info("printing body of request");
+    __logger.info(req.body);
 
+    // get the string of the message body
+    var message_body = req.body.Body;
+
+    // geocode the message body (assume all of it is the location)
+    geocoder.geocode(message_body, function(error, data){
+
+        // on geocoder error, log and return
         if (error) {
-            __logger.error("Error with DarkSky API: ${error}");
-            return;
+            __logger.error("Error with geocoder api: ${error}");
         }
 
-        // try responding
-        var resp = new twilio.TwimlResponse();
+        var results = data.results;
+        var coords = results[0].geometry.location;
 
-        resp.message(body.hourly.summary);
+        // this gets the hourly blurb for a certain location
+        ds_client.get_hourly(coords.lat, coords.lng, function(error, body){
 
-        __logger.info("responding with %s", resp.toString());
+            if (error) {
+                __logger.error("Error with DarkSky API: ${error}");
+                return;
+            }
 
-        res.writeHead(200, {'Content-Type': 'text/xml'});
-        res.end(resp.toString());
+            // try responding
+            var resp = new twilio.TwimlResponse();
+
+            resp.message(body.hourly.summary);
+
+            __logger.info("responding with %s", resp.toString());
+
+            res.writeHead(200, {'Content-Type': 'text/xml'});
+            res.end(resp.toString());
+
+        });
 
     });
 
