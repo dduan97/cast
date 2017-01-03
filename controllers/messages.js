@@ -12,17 +12,19 @@ var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
 router.post("/", function(req, res){
 
     __logger.info("printing request");
-    console.log(req);
+    console.log(req.body);
 
     // get the string of the message body
-    var message_body = req.body.Body;
+    var message_body = req.body.body;
 
     // geocode the message body (assume all of it is the location)
     geocoder.geocode(message_body, function(error, data){
 
         // on geocoder error, log and return
         if (error) {
-            __logger.error("Error with geocoder api: ${error}");
+            __logger.error("Error with geocoder api:");
+            __logger.error(error);
+            return;
         }
 
         var results = data.results;

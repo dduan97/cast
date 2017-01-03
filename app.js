@@ -26,6 +26,8 @@ const PORT = process.env.PORT || 2180;
 var app = express();
 
 app.use(body_parser.json());    // middleware to parse body
+app.use(body_parser.urlencoded({extended: true}));
+
 app.use(function(req, res, next){   // middleware to log request
     __logger.info("%s: %s", req.method, req.originalUrl);
     next();
