@@ -15,7 +15,7 @@ router.post("/", function(req, res){
     console.log(req.body);
 
     // get the string of the message body
-    var message_body = req.body.body;
+    var message_body = req.body.Body;
 
     // geocode the message body (assume all of it is the location)
     geocoder.geocode(message_body, function(error, data){
