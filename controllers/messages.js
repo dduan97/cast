@@ -39,7 +39,7 @@ router.post("/", function(req, res){
             // try responding
             var resp = new twilio.TwimlResponse();
 
-            resp.message(body.hourly.summary);
+            resp.message(message_body + ": " + body.hourly.summary);
 
             __logger.info("responding with %s", resp.toString());
 
