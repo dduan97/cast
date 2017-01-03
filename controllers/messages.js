@@ -12,7 +12,7 @@ var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
 router.post("/", function(req, res){
 
     __logger.info("printing body of request");
-    __logger.info(req.body);
+    console.log(req.body);
 
     // get the string of the message body
     var message_body = req.body.Body;
