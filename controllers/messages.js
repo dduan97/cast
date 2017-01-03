@@ -29,12 +29,13 @@ router.post("/", function(req, res){
             return;
         }
 
+        // list of results
         var results = data.results;
 
         // if the results list is empty
         if (results.length == 0) {
             __logger.info("No geocoding results for " + message_body);
-            twilio_helpers.send_twiml(res, ["Location not found: " + message_body + ". Please try again"]);
+            twilio_helpers.send_twiml(res, ["Location not found: " + message_body + ". C'mon, stop trying to make our job so hard."]);
             return;
         }
 
@@ -49,7 +50,7 @@ router.post("/", function(req, res){
                 return;
             }
 
-            var reply_string = message_body + ": " + body.hourly.summary;
+            var reply_string = results[0].formatted_address + ": " + body.hourly.summary;
             twilio_helpers.send_twiml(res, [reply_string]);
 
         });
