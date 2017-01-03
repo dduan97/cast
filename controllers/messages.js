@@ -116,8 +116,7 @@ router.post("/", parse_incoming_message, function(req, res){
 
                 outbound_msg += hourly_forecast_to_string(hourly_data.slice(0,6));
 
-                var reply_string = results[0].formatted_address + ": " + outbound_msg;
-                twilio_helpers.send_twiml(res, [reply_string]);
+                twilio_helpers.send_twiml(res, [outbound_msg]);
 
             });
         } else {
