@@ -5,89 +5,89 @@ var router = require("express").Router();
 var geocoder = require("geocoder");
 var _ = require("lodash");
 
-var twilio_helpers = __include("helpers/twilio.js");
-var dark_sky = __include("helpers/dark-sky.js");
-var ds_client = new dark_sky.DarkSky(process.env.DARK_SKY_KEY);
+var twilioHelpers = __include("helpers/twilio.js");
+var darkSky = __include("helpers/dark-sky.js");
+var dsClient = new darkSky.DarkSky(process.env.DARK_SKY_KEY);
 
 // middleware to parse our message body
-function parse_incoming_message(req, res, next){
+function parseIncomingMessage(req, res, next){
     // get the request message body, split by word
-    var message_body = req.body.Body.match(/\S+/g);
-    message_body = message_body.map((e) => e.toLowerCase());
+    var messageBody = req.body.Body.match(/\S+/g);
+    messageBody = messageBody.map((e) => e.toLowerCase());
 
     // if the body is empty
-    if (message_body.length == 0) {
+    if (messageBody.length == 0) {
         req.body.Body = {
             command: "",
             location: ""
         }
         next();
-    } else if (_.indexOf(["hourly"], message_body[0]) >= 0) {
+    } else if (_.indexOf(["hourly"], messageBody[0]) >= 0) {
         // command is known
-        var command = message_body.shift();
-        var location = message_body.join(" ");
+        var command = messageBody.shift();
+        var location = messageBody.join(" ");
 
         // first word is the forecast type/command, the rest is the location info
-        var parsed_message = {
+        var parsedMessage = {
             command: command,
             location: location
         }
 
-        req.body.Body = parsed_message;
+        req.body.Body = parsedMessage;
         next();
     } else {
         // command is unknown and probably a bad request
         var command = "";
-        var location = message_body.join(" ");
+        var location = messageBody.join(" ");
 
         // first word is the forecast type/command, the rest is the location info
-        var parsed_message = {
+        var parsedMessage = {
             command: command.toLowerCase(),
             location: location.toLowerCase()
         }
 
-        req.body.Body = parsed_message;
+        req.body.Body = parsedMessage;
         next();
     }
 }
 
 // convert an hourly forecast object to a string
-function hourly_forecast_to_string(hourly_list){
-    var forecast_string = "";
-    hourly_list.forEach(function(element){
-        forecast_string += "\n";
+function hourlyToString(hourlyList){
+    var forecastString = "";
+    hourlyList.forEach(function(element){
+        forecastString += "\n";
         // get the timestamp and convert it to hour/minute
         var date = new Date(element.time*1000);
-        forecast_string += date.getHours().toString() + ":" + "00";
-        forecast_string += " - ";
+        forecastString += date.getHours().toString() + ":" + "00";
+        forecastString += " - ";
 
         // now get the temp
-        forecast_string += "Temp ";
-        forecast_string += Math.round(element.temperature).toString();
-        forecast_string += "F. ";
+        forecastString += "Temp ";
+        forecastString += Math.round(element.temperature).toString();
+        forecastString += "F. ";
 
         // get the conditions. 
-        forecast_string += element.summary;
+        forecastString += element.summary;
 
         // if there's >5% rain, report it
-        var chance_precip = Math.round(element.precipProbability*100);
+        var chancePrecip = Math.round(element.precipProbability*100);
 
-        if (chance_precip >= 10){
-            forecast_string += "(";
-            forecast_string += chance_precip;
-            forecast_string += "% ";
-            forecast_string += element.precipType + ")";
+        if (chancePrecip >= 10){
+            sendTwiml += "(";
+            forecastString += chancePrecip;
+            forecastString += "% ";
+            forecastString += element.precipType + ")";
         }
 
     });
 
-    return forecast_string.slice(1);
+    return forecastString.slice(1);
 }
 
 
 // handles POST to /message/
 // Twilio will POST here for an incoming message
-router.post("/", parse_incoming_message, function(req, res){
+router.post("/", parseIncomingMessage, function(req, res){
 
     __logger.info("printing request");
     console.log(req.body);
@@ -99,7 +99,7 @@ router.post("/", parse_incoming_message, function(req, res){
     // if there is no location
     if (!location) {
         __logger.info("no location in the body");
-        twilio_helpers.send_twiml(res, ["No location body found (maybe this will be supported later, who knows"]);
+        twilioHelpers.sendTwiml(res, ["No location body found (maybe this will be supported later, who knows"]);
         return;
     }
 
@@ -110,7 +110,7 @@ router.post("/", parse_incoming_message, function(req, res){
         if (error) {
             __logger.error("Error with geocoder api:");
             __logger.error(error);
-            twilio_helpers.send_twiml(res, ["Error with message body " + location + ". (geocoding error response)"]);
+            twilioHelpers.sendTwiml(res, ["Error with message body " + location + ". (geocoding error response)"]);
             return;
         }
 
@@ -120,7 +120,7 @@ router.post("/", parse_incoming_message, function(req, res){
         // if the results list is empty
         if (results.length == 0) {
             __logger.info("No geocoding results for " + location);
-            twilio_helpers.send_twiml(res, ["Location not found: " + location + ". C'mon, stop trying to make our job so hard."]);
+            twilioHelpers.sendTwiml(res, ["Location not found: " + location + ". C'mon, stop trying to make our job so hard."]);
             return;
         }
 
@@ -128,26 +128,26 @@ router.post("/", parse_incoming_message, function(req, res){
 
         if (command == "hourly") {
             // this gets the hourly blurb for a certain location
-            ds_client.getForecasts(coords.lat, coords.lng, ["hourly"], function(error, body){
+            dsClient.getForecasts(coords.lat, coords.lng, ["hourly"], function(error, body){
 
                 if (error) {
                     __logger.error("Error with DarkSky API: ${error}");
-                    twilio_helpers.send_twiml(res, ["Error retrieving DarkSky forecast for " + location]);
+                    twilioHelpers.sendTwiml(res, ["Error retrieving DarkSky forecast for " + location]);
                     return;
                 }
 
-                var hourly_data = body.hourly.data;
-                var outbound_msg = results[0].formatted_address + " hourly:\n";
+                var hourlyData = body.hourly.data;
+                var ouboundMessage = results[0].formatted_address + " hourly:\n";
 
-                outbound_msg += hourly_forecast_to_string(hourly_data.slice(0,6));
+                ouboundMessage += hourlyToString(hourlyData.slice(0,6));
 
-                twilio_helpers.send_twiml(res, [outbound_msg]);
+                twilioHelpers.sendTwiml(res, [ouboundMessage]);
                 return;
 
             });
         } else {
             __logger.info("invalid command %s", command);
-            twilio_helpers.send_twiml(res, ["Invalid command " + command]);
+            twilioHelpers.sendTwiml(res, ["Invalid command " + command]);
             return;
         }
 

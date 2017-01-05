@@ -1,8 +1,8 @@
 // __base_dir gives the project's home directory
 global.__base_dir = __dirname;
 
-// __abs_path() converts relative path (from project home) to absolute paths
-global.__abs_path = function(path) {
+// __absPath() converts relative path (from project home) to absolute paths
+global.__absPath = function(path) {
   return __base_dir + path;
 }
 
@@ -10,7 +10,7 @@ global.__abs_path = function(path) {
 // nice cause can be used anywhere without regards to the calling file's
 // location
 global.__include = function(file) {
-    return require(__abs_path("/" + file));
+    return require(__absPath("/" + file));
 }
 
 // set up a global winston logger instance
@@ -18,15 +18,15 @@ global.__logger = __include("helpers/logger.js");
 
 var express = require("express");
 var https = require("https");
-var body_parser = require("body-parser");
+var bodyParser = require("body-parser");
 
 const PORT = process.env.PORT || 2180;
 
 // create the application
 var app = express();
 
-app.use(body_parser.json());    // middleware to parse body
-app.use(body_parser.urlencoded({extended: true}));
+app.use(bodyParser.json());    // middleware to parse body
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(function(req, res, next){   // middleware to log request
     __logger.info("%s: %s", req.method, req.originalUrl);

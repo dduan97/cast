@@ -19,7 +19,7 @@ var twilio = require("twilio");
 // <res> should be the response object from the hook
 // <msgs> should be a list of strings corresponding to the list of message 
 // verbs wanted in the response
-module.exports.send_twiml = function(res, msgs){
+module.exports.sendTwiml = function(res, msgs){
     var resp = new twilio.TwimlResponse();
 
     msgs.forEach(function(element){
