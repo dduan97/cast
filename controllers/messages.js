@@ -3,6 +3,7 @@
 var twilio = require("twilio");
 var router = require("express").Router();
 var geocoder = require("geocoder");
+var _ = require("lodash");
 
 var twilio_helpers = __include("helpers/twilio.js");
 var dark_sky = __include("helpers/dark-sky.js");
@@ -21,7 +22,8 @@ function parse_incoming_message(req, res, next){
             location: ""
         }
         next();
-    } else if (["hourly"].includes(message_body[0])) {
+    } else if (_.indexOf(["hourly"], message_body[0]) >= 0) {
+        // command is known
         var command = message_body.shift();
         var location = message_body.join(" ");
 
@@ -34,6 +36,7 @@ function parse_incoming_message(req, res, next){
         req.body.Body = parsed_message;
         next();
     } else {
+        // command is unknown and probably a bad request
         var command = "";
         var location = message_body.join(" ");
 
@@ -125,7 +128,7 @@ router.post("/", parse_incoming_message, function(req, res){
 
         if (command == "hourly") {
             // this gets the hourly blurb for a certain location
-            ds_client.get_hourly(coords.lat, coords.lng, function(error, body){
+            ds_client.getForecasts(coords.lat, coords.lng, ["hourly"], function(error, body){
 
                 if (error) {
                     __logger.error("Error with DarkSky API: ${error}");
