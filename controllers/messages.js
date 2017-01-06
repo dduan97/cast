@@ -14,7 +14,6 @@ var supportedForecasts = ["currently",
                             "minutely",
                             "daily",
                             "alerts",
-                            "flags",
                             "hourly"];
 
 // extend the Date class to be able to get the day of week
@@ -100,8 +99,8 @@ function hourlyToString(hourlyList, offset){
     hourlyList.slice(0,6).forEach(function(element){
         forecastString += "\n";
         // get the timestamp and convert it to hour/minute
-        var date = new Date(element.time*1000);
-        forecastString += (date.getUTCHours() + offset).toString();
+        var date = new Date(element.time*1000 + offset*60*60*1000);
+        forecastString += date.getUTCHours().toString();
         forecastString += ":" + "00";
         forecastString += " - ";
 
@@ -140,7 +139,7 @@ function dailyToString(dailyList, offset){
     dailyList.slice(0,5).forEach(function(element){
         forecastString += "\n";
         // get the timestamp and get the date (kinda hacky)
-        var date = new Date(element.time*1000 - offset*60*60*100);
+        var date = new Date(element.time*1000 + offset*60*60*1000);
         forecastString += date.getUTCDayOfWeek();
         forecastString += " - ";
 
@@ -169,6 +168,40 @@ function dailyToString(dailyList, offset){
     return forecastString;
 }
 
+function currentlyToString(currently, offset){
+    __logger.debug("getting currently string");
+
+    // get this local date object nonsense
+    var date = new Date(currently.time*1000 + offset*60*60*1000);
+
+    var forecastString = "currently (";
+    forecastString += date.getUTCHours() + ":" + "00):\n";
+
+    // put in the temp, conditions, chance precip, and wind
+    forecastString += "Temp ";
+    forecastString += Math.round(currently.temperature);
+    forecastString += "F.\n";
+    forecastString += currently.summary;
+
+    // get the chance rain
+    var chancePrecip = Math.round(currently.precipProbability*100);
+
+    if (chancePrecip >= 10) {
+        forecastString += "(";
+        forecastString += chancePrecip.toString();
+        forecastString += "% ";
+        forecastString += currently.precipType;
+        forecastString += ").";
+    }
+
+    // now get the wind
+    forecastString += "\nWind ";
+    forecastString += currently.windSpeed;
+    forecastString += " MPH."
+
+    return forecastString;
+}
+
 // takes in a DarkSky API response <dsResponse> and a forecast type string
 // <forecast>
 // and stringifies the forecast in the response
@@ -184,6 +217,9 @@ function getForecastString(dsResponse, forecastType){
 
         case "daily":
             return dailyToString(dsResponse.daily.data, timeOffset);
+
+        case "currently":
+            return currentlyToString(dsResponse.currently, timeOffset);
     }
 }
 
