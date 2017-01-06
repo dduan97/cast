@@ -175,7 +175,9 @@ function currentlyToString(currently, offset){
     var date = new Date(currently.time*1000 + offset*60*60*1000);
 
     var forecastString = "currently (";
-    forecastString += date.getUTCHours() + ":" + "00):\n";
+    forecastString += date.getUTCHours() + ":";
+    forecastString += ("0" + date.getUTCMinutes()).slice(-2);
+    forecastString += "):\n";
 
     // put in the temp, conditions, chance precip, and wind
     forecastString += "Temp ";
@@ -196,7 +198,7 @@ function currentlyToString(currently, offset){
 
     // now get the wind
     forecastString += "\nWind ";
-    forecastString += currently.windSpeed;
+    forecastString += Math.round(currently.windSpeed);
     forecastString += " MPH."
 
     return forecastString;
