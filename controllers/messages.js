@@ -296,6 +296,29 @@ router.post("/", parseIncomingMessage, function(req, res){
             });
 
         // if the command is not in the known list
+        } else if (!command) {
+            __logger.info("no command, assuming hourly");
+
+            dsClient.getForecasts(coords.lat, coords.lng, ["hourly"],
+                function(error, body){
+
+                if (error) {
+                    __logger.error("Error with DarkSky API: ${error}");
+                    twilioHelpers.sendTwiml(res, ["Error retrieving DarkSky \
+                        forecast for " + location]);
+                    return;
+                }
+
+                var resMessage = results[0].formatted_address + " ";
+
+                resMessage += getForecastString(body, "hourly");
+
+                twilioHelpers.sendTwiml(res, [resMessage]);
+                return;
+                }
+
+            )
+
         } else {
             __logger.info("invalid command %s", command);
             twilioHelpers.sendTwiml(res, ["Invalid command " + command]);
