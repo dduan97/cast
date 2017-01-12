@@ -1,4 +1,5 @@
 // router for /message routes
+// TODO: stop using res.offset (grumble grumble) and parse res.timezone instead
 
 var twilio = require("twilio");
 var router = require("express").Router();
@@ -89,10 +90,15 @@ function parseIncomingMessage(req, res, next){
 //          "temperature": 41.72,
 //      }]
 // => "13:00 - Temp 43F. Clear\n14:00 - Temp 42F. Drizzle(30% rain)"
-function hourlyToString(hourlyList, offset){
+function hourlyToString(hourly, offset){
 
     __logger.debug("getting hourly string");
 
+    if (!hourly) {
+        return "Hourly forecast not available for the location you provided";
+    }
+
+    var hourlyList = hourly.data;
     var forecastString = "hourly: ";
 
     // get the hourly for the first 6 entries
@@ -127,12 +133,17 @@ function hourlyToString(hourlyList, offset){
     return forecastString;
 }
 
-// dailyToString(<dailyList>)
+// dailyToString(<daily>)
 // does the same as hourly but with daily
-function dailyToString(dailyList, offset){
+function dailyToString(daily, offset){
 
     __logger.debug("getting daily string");
 
+    if (!daily) {
+        return "Daily forecast not available for the location you provided";
+    }
+
+    var dailyList = daily.data;
     var forecastString = "5-day: ";
 
     // get the daily for the next 5 days
@@ -171,6 +182,10 @@ function dailyToString(dailyList, offset){
 function currentlyToString(currently, offset){
     __logger.debug("getting currently string");
 
+    if (!currently) {
+        return "Current conditions not available for the location you provided";
+    }
+
     // get this local date object nonsense
     var date = new Date(currently.time*1000 + offset*60*60*1000);
 
@@ -204,10 +219,29 @@ function currentlyToString(currently, offset){
     return forecastString;
 }
 
+// minutelyToString(<minutely>, <offset>)
+// <minutely>: minutely object from DarkSky API
+// <offset>: number of hours offset from UTC
+// returns a stringified within-the-hour forecast
+function minutelyToString(minutely, offset){
+    __logger.info("getting minutely string");
+
+    if (!minutely) {
+        return "Minutely forecast not available for the location you provided";
+    }
+
+    // TODO: make an actual forecast
+    return "minutely forecast: \n" + minutely.summary;
+}
+
 // takes in a DarkSky API response <dsResponse> and a forecast type string
 // <forecast>
 // and stringifies the forecast in the response
 function getForecastString(dsResponse, forecastType){
+
+    if (!dsResponse) {
+        return "Error: empty DarkSky response body";
+    }
 
     var timeOffset = dsResponse.offset;
 
@@ -215,13 +249,19 @@ function getForecastString(dsResponse, forecastType){
     switch (forecastType) {
 
         case "hourly":
-            return hourlyToString(dsResponse.hourly.data, timeOffset);
+            return hourlyToString(dsResponse.hourly, timeOffset);
 
         case "daily":
-            return dailyToString(dsResponse.daily.data, timeOffset);
+            return dailyToString(dsResponse.daily, timeOffset);
 
         case "currently":
             return currentlyToString(dsResponse.currently, timeOffset);
+
+        case "minutely":
+            return minutelyToString(dsResponse.minutely, timeOffset);
+
+        default:
+            return "Forecast not supported: " + forecastType;
     }
 }
 
@@ -302,19 +342,19 @@ router.post("/", parseIncomingMessage, function(req, res){
             dsClient.getForecasts(coords.lat, coords.lng, ["hourly"],
                 function(error, body){
 
-                if (error) {
-                    __logger.error("Error with DarkSky API: ${error}");
-                    twilioHelpers.sendTwiml(res, ["Error retrieving DarkSky \
-                        forecast for " + location]);
+                    if (error) {
+                        __logger.error("Error with DarkSky API: ${error}");
+                        twilioHelpers.sendTwiml(res, ["Error retrieving \
+                            forecast for " + location]);
+                        return;
+                    }
+
+                    var resMessage = results[0].formatted_address + " ";
+
+                    resMessage += getForecastString(body, "hourly");
+
+                    twilioHelpers.sendTwiml(res, [resMessage]);
                     return;
-                }
-
-                var resMessage = results[0].formatted_address + " ";
-
-                resMessage += getForecastString(body, "hourly");
-
-                twilioHelpers.sendTwiml(res, [resMessage]);
-                return;
                 }
 
             )
