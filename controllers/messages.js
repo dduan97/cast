@@ -111,7 +111,6 @@ function hourlyToString(hourly, offset){
         forecastString += " - ";
 
         // now get the temp
-        forecastString += "Temp ";
         forecastString += Math.round(element.temperature).toString();
         forecastString += "F. ";
 
@@ -155,7 +154,6 @@ function dailyToString(daily, offset){
         forecastString += " - ";
 
         // now get the temp
-        forecastString += "Temp ";
         forecastString += Math.round(element.temperatureMin).toString();
         forecastString += "F-";
         forecastString += Math.round(element.temperatureMax).toString();
@@ -195,7 +193,6 @@ function currentlyToString(currently, offset){
     forecastString += "):\n";
 
     // put in the temp, conditions, chance precip, and wind
-    forecastString += "Temp ";
     forecastString += Math.round(currently.temperature);
     forecastString += "F.\n";
     forecastString += currently.summary;
